@@ -22,22 +22,6 @@ const db = getFirestore(firebaseApp);
 const employeesCollection = collection(db, "employees");
 const attendanceCollection = collection(db, "attendanceLogs");
 
-// URL Web App Google Apps Script (untuk mewarnai sel kehadiran di spreadsheet)
-const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyUKqoFED4rUWhWJ-v6iyugFsnKaXegBIub69i4VIA_8IFesIhYhIak2rBWTrmjrr_6/exec";
-
-// Kirim data absen ke Google Sheets (fire-and-forget, tidak menghentikan alur utama kalau gagal)
-function syncToGoogleSheets(entry) {
-  if (!GOOGLE_SHEETS_WEB_APP_URL) return;
-  fetch(GOOGLE_SHEETS_WEB_APP_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(entry)
-  }).catch((err) => {
-    console.error('Gagal sinkron ke Google Sheets:', err);
-  });
-}
-
 // ============================================================
 // STATE (data selalu diambil live dari Firestore, bukan hardcode lagi)
 // ============================================================
@@ -221,6 +205,16 @@ async function handleAttendanceSubmit(e) {
   if (!selectedEmployee) return;
 
   const dateStr = now.toISOString().split('T')[0];
+
+  const sudahAbsenHariIni = attendanceLogs.some(
+    (log) => log.id === selectedEmployee.id && log.tanggal === dateStr
+  );
+
+  if (sudahAbsenHariIni) {
+    showToast('warning', 'Sudah Absen', `${selectedEmployee.name} sudah melakukan absensi hari ini. Tidak bisa absen dua kali dalam satu hari.`);
+    return;
+  }
+
   const timeStr = now.toLocaleTimeString('id-ID');
 
   const newEntry = {
@@ -238,7 +232,6 @@ async function handleAttendanceSubmit(e) {
 
   try {
     await addDoc(attendanceCollection, newEntry);
-    syncToGoogleSheets(newEntry);
     showToast('success', 'Absensi Berhasil', `Terima kasih ${selectedEmployee.name}. Data presensi Anda telah tercatat.`);
     clearEmployeeSelection();
   } catch (err) {
