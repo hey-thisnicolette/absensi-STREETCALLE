@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STREET CALLE-18 - Portal Kehadiran Admin</title>
+  
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            burgundy: {
+              DEFAULT: '#6b0d25',
+              50: '#fff5f7',
+              100: '#fce8ec',
+              200: '#f8d3dc',
+              600: '#8b1233',
+              700: '#6b0d25',
+              800: '#52081b',
+              900: '#3a0412',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans text-xs">
+
+  <!-- STICKY NAVBAR -->
+  <header class="bg-burgundy text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
+          <i class="fa-solid fa-user-check text-sm text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-extrabold tracking-wide leading-none">STREET CALLE-18</h1>
+          <p class="text-[10px] text-burgundy-200 mt-0.5">Portal Kehadiran Admin</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="adminPortalBtn" onclick="openAdminModal()" class="px-3.5 py-1 text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/30 rounded-full transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-lock text-[10px]"></i>
+          <span>Login Admin</span>
+        </button>
+        <button id="adminLogoutBtn" onclick="logoutAdmin()" class="hidden px-3.5 py-1 text-xs font-semibold bg-rose-600 hover:bg-rose-700 rounded-full transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
+          <span>Keluar Admin</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5">
+
+    <!-- EMPLOYEE FORM SECTION (KARYAWAN) -->
+    <div id="employeeSection" class="bg-white rounded-2xl shadow-md border border-slate-200/80 overflow-hidden max-w-xl mx-auto my-4">
+      
+      <!-- HEADER BURGUNDY -->
+      <div class="bg-burgundy text-white p-6 text-center relative flex flex-col items-center justify-center">
+        <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center border border-white/20 mb-2">
+          <i class="fa-solid fa-id-card text-xl text-white"></i>
+        </div>
+        <h2 class="text-xl font-extrabold tracking-tight">Presensi Harian</h2>
+        <p class="text-[11px] text-burgundy-200 mt-0.5 font-medium">Langsung pilih ID/Nama Anda untuk absen hari ini</p>
+        
+        <!-- Live Time Badge Pill -->
+        <div class="mt-3 bg-black/30 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider border border-white/10 flex items-center space-x-1.5">
+          <i class="fa-regular fa-clock text-amber-300 text-xs"></i>
+          <span id="currentTimeDisplay">00.00.00 WIB</span>
+        </div>
+      </div>
+
+      <!-- STATUS BAR HIJAU / MERAH -->
+      <div id="statusBanner" class="bg-emerald-50 border-b border-emerald-100 px-4 py-2 text-center transition-all duration-300">
+        <div class="inline-flex items-center space-x-1.5 text-emerald-800 text-[11px] font-bold">
+          <span id="statusDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="statusBadgeText">Status Absen: BUKA (08:00 - 21:00 WIB)</span>
+        </div>
+      </div>
+
+      <!-- FORM AREA -->
+      <div class="p-5 space-y-4">
+
+        <!-- Time Warning Alert -->
+        <div id="timeWarningAlert" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[11px] flex items-start space-x-2">
+          <i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm mt-0.5"></i>
+          <div>
+            <span class="font-bold">Absensi Ditutup!</span>
+            <p class="text-amber-700 mt-0.5">Sistem presensi hanya menerima pengiriman antara jam <strong>08:00 WIB hingga 21:00 WIB</strong>.</p>
+          </div>
+        </div>
+
+        <form id="attendanceForm" onsubmit="handleAttendanceSubmit(event)" class="space-y-4">
+          <!-- Searchable Dropdown Container -->
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600">Pilih ID / Nama Admin</label>
+            <div class="relative">
+              <div class="relative">
+                <input type="text" id="employeeSearchInput" placeholder="Ketik Kode atau Nama..." autocomplete="off" onfocus="showDropdown()" oninput="filterEmployees()" class="w-full px-3.5 py-2.5 pl-9 pr-9 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-burgundy/40 focus:border-burgundy text-xs text-slate-800 font-medium transition">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                <button type="button" id="clearSearchBtn" onclick="clearEmployeeSelection()" class="hidden absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                  <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+              </div>
+
+              <!-- Dropdown List -->
+              <div id="employeeDropdown" class="hidden absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview Selected Employee Card -->
+          <div id="selectedEmployeeCard" class="hidden bg-burgundy-50 border border-burgundy-100 rounded-xl p-3 transition-all">
+            <div class="flex items-center justify-between mb-1.5 border-b border-burgundy-100/80 pb-1.5">
+              <span class="text-[9px] font-bold text-burgundy uppercase tracking-wider">Konfirmasi Identitas</span>
+              <span class="text-[10px] bg-burgundy text-white px-1.5 py-0.5 rounded font-mono font-bold" id="cardKode">-</span>
+            </div>
+            <div class="grid grid-cols-1 gap-1 text-[11px]">
+              <div>
+                <span class="text-slate-500">Nama Lengkap:</span>
+                <span class="font-bold text-slate-800 ml-1" id="cardNama">-</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 pt-1 border-t border-burgundy-100/50">
+                <div>
+                  <span class="text-slate-500 block text-[10px]">Divisi:</span>
+                  <span class="font-bold text-burgundy" id="cardDivisi">-</span>
+                </div>
+                <div>
+                  <span class="text-slate-500 block text-[10px]">Username (USN):</span>
+                  <span class="font-mono text-slate-700" id="cardUsername">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="submitBtn" disabled class="w-full py-3 px-4 bg-burgundy hover:bg-burgundy-800 text-white font-bold rounded-xl shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 text-xs">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Absen Sekarang</span>
+          </button>
+        </form>
+
+        <!-- KOTAK INFORMASI ABSENSI -->
+        <div class="bg-burgundy-50 border border-burgundy-100 rounded-xl p-3 text-[11px] text-burgundy-900 flex items-start space-x-2.5">
+          <div class="w-5 h-5 bg-burgundy text-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-serif font-bold text-xs">i</div>
+          <div class="space-y-0.5">
+            <h4 class="font-bold text-burgundy text-xs">Informasi Absensi:</h4>
+            <p class="leading-relaxed text-slate-700">
+              Admin tidak perlu login. Jam operasional absen dimulai dari jam <strong class="text-burgundy">08:00 WIB</strong> sampai <strong class="text-burgundy">21:00 WIB</strong>.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD LAYOUT -->
+    <div id="adminSection" class="hidden bg-slate-200/60 rounded-2xl p-4 shadow-xl border border-slate-300/60 space-y-4">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        <!-- SIDEBAR KIRI ADMIN -->
+        <aside class="lg:col-span-3 bg-burgundy text-white rounded-xl p-4 flex flex-col justify-between shadow-md">
+          <div class="space-y-6">
+            <div class="text-center pb-4 border-b border-white/10">
+              <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-2 border border-white/20 shadow-inner">
+                <i class="fa-solid fa-user-shield text-2xl text-amber-300"></i>
+              </div>
+              <h3 class="font-extrabold text-sm tracking-wide">SEKRETARIS</h3>
+            </div>
+
+            <!-- Vertical Navigation Sidebar -->
+            <nav class="space-y-1.5">
+              <button onclick="switchAdminTab(1)" id="sideNav1" class="w-full px-3.5 py-2.5 rounded-lg text-left font-bold text-xs bg-white/15 text-white flex items-center space-x-2.5 transition shadow-sm">
+                <i class="fa-solid fa-user-clock w-4 text-amber-300"></i>
+                <span>Belum Absen Hari Ini</span>
+              </button>
+              <button onclick="switchAdminTab(2)" id="sideNav2" class="w-full px-3.5 py-2.5 rounded-lg text-left font-semibold text-xs text-burgundy-100 hover:bg-white/10 flex items-center space-x-2.5 transition">
+                <i class="fa-solid fa-users-gear w-4"></i>
+                <span>Kelola Data Admin</span>
+              </button>
+            </nav>
+          </div>
+
+          <div class="pt-4 border-t border-white/10 mt-6">
+            <button onclick="logoutAdmin()" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs transition flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>Keluar Admin</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- MAIN DASHBOARD CONTENT AREA -->
+        <div class="lg:col-span-9 space-y-4">
+          
+          <!-- TOP STATS CARDS ROW -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Total Terdata</span>
+              <p id="statTotal" class="text-xl font-black text-burgundy mt-0.5">0</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Sudah Absen Hari Ini</span>
+              <p id="statToday" class="text-xl font-black text-emerald-600 mt-0.5">0</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Belum Absen Hari Ini</span>
+              <p id="statUnattended" class="text-xl font-black text-rose-600 mt-0.5">0</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Total Admin</span>
+              <p id="statEmployees" class="text-xl font-black text-slate-700 mt-0.5">5</p>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 1: UNATTENDED EMPLOYEES TODAY -->
+          <div id="tabContent1" class="admin-tab-content bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                <h3 class="font-bold text-slate-800 text-xs">Daftar Admin Belum Absen Hari Ini</h3>
+              </div>
+              <span id="unattendedBadgeCount" class="text-[10px] font-bold bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full">0 Admin</span>
+            </div>
+            <div id="unattendedContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 2: KELOLA DATA ADMIN -->
+          <div id="tabContent2" class="admin-tab-content hidden space-y-4">
+            <!-- Form Tambah/Edit Member -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+              <h3 id="memberFormTitle" class="font-bold text-burgundy text-sm border-b pb-2">Tambah Admin Baru</h3>
+              <form id="memberForm" onsubmit="handleMemberFormSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input type="hidden" id="editMemberId">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Kode Unik Admin</label>
+                  <input type="text" id="inputKodeMember" required placeholder="Contoh: 25373517" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-burgundy">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Nama Lengkap</label>
+                  <input type="text" id="inputNamaMember" required placeholder="Contoh: Nicolette" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-burgundy">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Divisi</label>
+                  <input type="text" id="inputDivisiMember" required placeholder="Contoh: Secretary" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-burgundy">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-600 mb-0.5">Username (USN)</label>
+                  <input type="text" id="inputUsernameMember" required placeholder="Contoh: iRosyveil" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-burgundy">
+                </div>
+                <div class="sm:col-span-2 flex justify-end space-x-2 pt-1">
+                  <button type="button" id="cancelEditBtn" onclick="resetMemberForm()" class="hidden px-3 py-1 bg-slate-200 text-slate-700 font-bold rounded-lg text-xs hover:bg-slate-300">Batal</button>
+                  <button type="submit" id="saveMemberBtn" class="px-4 py-1.5 bg-burgundy hover:bg-burgundy-800 text-white font-bold rounded-lg text-xs transition shadow-sm">
+                    Simpan Admin
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Tabel Daftar Member -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+              <h3 class="font-bold text-slate-800 text-sm">Daftar Admin Terdaftar</h3>
+              <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="w-full text-left text-[11px] text-slate-700">
+                  <thead class="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider">
+                    <tr>
+                      <th class="p-2">Kode ID</th>
+                      <th class="p-2">Nama Admin</th>
+                      <th class="p-2">Divisi</th>
+                      <th class="p-2">Username</th>
+                      <th class="p-2 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="memberTableBody" class="divide-y divide-slate-100">
+                    <!-- Injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200/80 py-4 mt-auto text-center text-[11px] text-slate-500">
+    <div class="max-w-7xl mx-auto px-4">
+      &copy; 2026 E-Absensi System. Developer by Nicolette Maëlys.
+    </div>
+  </footer>
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div id="adminModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-xs w-full p-5 space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-burgundy text-sm">Login as Sekretaris</h3>
+        <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <p class="text-[11px] text-slate-500">Masukkan PIN Sekretaris untuk mengelola sistem.</p>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-700 mb-1">PIN Sekretaris</label>
+        <input type="password" id="adminPinInput" placeholder="Masukan PIN" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-burgundy focus:outline-none">
+      </div>
+      <button onclick="verifyAdminPin()" class="w-full py-2 bg-burgundy hover:bg-burgundy-800 text-white font-bold rounded-lg text-xs transition">
+        Masuk Sekretaris
+      </button>
+    </div>
+  </div>
+
+  <!-- CUSTOM POPUP TOAST MODAL (SUCCESS, WARNING, ERROR) -->
+  <div id="toastModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 text-center space-y-4 transform transition-all scale-100">
+      
+      <!-- Dynamic Icon Container -->
+      <div id="toastIconBg" class="w-14 h-14 rounded-full flex items-center justify-center mx-auto shadow-inner">
+        <i id="toastIcon" class="text-2xl"></i>
+      </div>
+
+      <!-- Dynamic Message Title & Desc -->
+      <div class="space-y-1">
+        <h3 id="toastTitle" class="font-extrabold text-slate-800 text-base"></h3>
+        <p id="toastMessage" class="text-slate-600 text-xs leading-relaxed"></p>
+      </div>
+
+      <!-- Action Button -->
+      <button onclick="closeToastModal()" id="toastBtn" class="w-full py-2.5 font-bold rounded-xl text-xs text-white shadow-md transition">
+        Mengerti
+      </button>
+    </div>
+  </div>
+
+  <!-- CUSTOM POPUP CONFIRM MODAL (PENGGANTI confirm() BAWAAN BROWSER) -->
+  <div id="confirmModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full p-6 text-center space-y-4 transform transition-all scale-100">
+
+      <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto shadow-inner bg-amber-100">
+        <i class="fa-solid fa-triangle-exclamation text-2xl text-amber-600"></i>
+      </div>
+
+      <div class="space-y-1">
+        <h3 id="confirmTitle" class="font-extrabold text-slate-800 text-base">Konfirmasi</h3>
+        <p id="confirmMessage" class="text-slate-600 text-xs leading-relaxed"></p>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="confirmCancelBtn" class="flex-1 py-2.5 font-bold rounded-xl text-xs text-slate-700 bg-slate-200 hover:bg-slate-300 shadow-sm transition">Batal</button>
+        <button id="confirmOkBtn" class="flex-1 py-2.5 font-bold rounded-xl text-xs text-white bg-rose-600 hover:bg-rose-700 shadow-md transition">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT UTAMA -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
