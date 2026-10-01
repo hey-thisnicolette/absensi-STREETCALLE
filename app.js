@@ -75,7 +75,7 @@ function refreshAllDataViews() {
   updateStats();
 }
 
-// TIME VALIDATION SYSTEM (08:00 - 21:00 WIB)
+// TIME VALIDATION SYSTEM (08:00 - 22:00 WIB)
 function initTimeChecker() {
   checkTimeWindow();
   setInterval(checkTimeWindow, 1000);
@@ -85,7 +85,7 @@ function checkTimeWindow() {
   const now = new Date();
   const currentHour = now.getHours();
 
-  const isWithinHours = currentHour >= 8 && currentHour < 21;
+  const isWithinHours = currentHour >= 8 && currentHour < 22;
 
   const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/:/g, '.') + " WIB";
   const clockDisplay = document.getElementById('currentTimeDisplay');
@@ -100,7 +100,7 @@ function checkTimeWindow() {
     if (banner) banner.className = "bg-emerald-50 border-b border-emerald-100 px-4 py-2 text-center transition-all duration-300";
     if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
     if (badgeText) {
-      badgeText.textContent = "Status Absen: BUKA (08:00 - 21:00 WIB)";
+      badgeText.textContent = "Status Absen: BUKA (08:00 - 22:00 WIB)";
       badgeText.className = "text-emerald-800 text-[11px] font-bold";
     }
     if (warningAlert) warningAlert.classList.add('hidden');
@@ -108,7 +108,7 @@ function checkTimeWindow() {
     if (banner) banner.className = "bg-rose-50 border-b border-rose-100 px-4 py-2 text-center transition-all duration-300";
     if (dot) dot.className = "w-2 h-2 rounded-full bg-rose-500";
     if (badgeText) {
-      badgeText.textContent = "Status Absen: TUTUP (08:00 - 21:00 WIB)";
+      badgeText.textContent = "Status Absen: TUTUP (08:00 - 22:00 WIB)";
       badgeText.className = "text-rose-800 text-[11px] font-bold";
     }
     if (warningAlert) warningAlert.classList.remove('hidden');
@@ -197,8 +197,8 @@ async function handleAttendanceSubmit(e) {
   const now = new Date();
   const currentHour = now.getHours();
 
-  if (currentHour < 8 || currentHour >= 21) {
-    showToast('warning', 'Absensi Ditolak', 'Absensi ditolak karena berada di luar jam operasional (08:00 - 21:00 WIB).');
+  if (currentHour < 8 || currentHour >= 22) {
+    showToast('warning', 'Absensi Ditolak', 'Absensi ditolak karena berada di luar jam operasional (08:00 - 22:00 WIB).');
     return;
   }
 
