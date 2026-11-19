@@ -3,8 +3,9 @@
 // ============================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, deleteDoc,
-  onSnapshot, addDoc, query, orderBy
+  getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, setDoc, deleteDoc,
+  onSnapshot, addDoc, query, orderBy, where, getCountFromServer
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -17,7 +18,15 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+// Cache lokal di browser: buka ulang web tidak membaca ulang semua dokumen dari server
+let db;
+try {
+  db = initializeFirestore(firebaseApp, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  db = getFirestore(firebaseApp);
+}
 
 const employeesCollection = collection(db, "employees");
 const attendanceCollection = collection(db, "attendanceLogs");
@@ -57,14 +66,40 @@ function initFirestoreListeners() {
     showToast('error', 'Gagal Memuat Data Admin', 'Tidak bisa terhubung ke database. Periksa koneksi internet Anda.');
   });
 
-  const attendanceQuery = query(attendanceCollection, orderBy("timestamp", "desc"));
-  onSnapshot(attendanceQuery, (snapshot) => {
+  listenAttendanceToday();
+  refreshTotalAttendance();
+}
+
+// Hanya absen HARI INI yang di-listen (hemat kuota baca Firestore)
+let attendanceUnsubscribe = null;
+let listenedDate = null;
+let totalAttendanceCount = 0;
+
+function listenAttendanceToday() {
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (listenedDate === todayStr) return;
+  if (attendanceUnsubscribe) attendanceUnsubscribe();
+  listenedDate = todayStr;
+
+  const attendanceQuery = query(attendanceCollection, where("tanggal", "==", todayStr));
+  attendanceUnsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
     attendanceLogs = snapshot.docs.map(d => d.data());
     refreshAllDataViews();
   }, (error) => {
     console.error("Firestore attendance error:", error);
     showToast('error', 'Gagal Memuat Data Absensi', 'Tidak bisa terhubung ke database. Periksa koneksi internet Anda.');
   });
+}
+
+// Total seluruh absen dihitung server-side (murah: bukan membaca semua dokumen)
+async function refreshTotalAttendance() {
+  try {
+    const snap = await getCountFromServer(attendanceCollection);
+    totalAttendanceCount = snap.data().count;
+    updateStats();
+  } catch (e) {
+    console.error("Gagal hitung total absensi:", e);
+  }
 }
 
 // FUNGSI UTAMA SINKRONISASI TAMPILAN
@@ -82,6 +117,7 @@ function initTimeChecker() {
 }
 
 function checkTimeWindow() {
+  listenAttendanceToday(); // ganti listener otomatis kalau tanggal berganti
   const now = new Date();
   const currentHour = now.getHours();
 
@@ -232,6 +268,7 @@ async function handleAttendanceSubmit(e) {
 
   try {
     await addDoc(attendanceCollection, newEntry);
+    refreshTotalAttendance();
     showToast('success', 'Absensi Berhasil', `Terima kasih ${selectedEmployee.name}. Data presensi Anda telah tercatat.`);
     clearEmployeeSelection();
   } catch (err) {
@@ -474,7 +511,7 @@ function updateStats() {
   const statUnattended = document.getElementById('statUnattended');
   const statEmployees = document.getElementById('statEmployees');
 
-  if (statTotal) statTotal.textContent = attendanceLogs.length;
+  if (statTotal) statTotal.textContent = Math.max(totalAttendanceCount, attendanceLogs.length);
   if (statToday) statToday.textContent = todayCount;
   if (statUnattended) statUnattended.textContent = unattendedCount;
   if (statEmployees) statEmployees.textContent = employeesList.length;
